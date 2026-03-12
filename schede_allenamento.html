@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le Mie Schede di Allenamento</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --card: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #e8ff3c;
+    --accent2: #ff5c3c;
+    --text: #f0ede8;
+    --muted: #888;
+    --green: #3cff8c;
+    --blue: #5c8cff;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.4;
+  }
+
+  /* HEADER */
+  header {
+    position: relative; padding: 60px 32px 40px;
+    border-bottom: 1px solid var(--border); overflow: hidden;
+  }
+  header::after {
+    content: 'TRAIN';
+    position: absolute; right: -20px; top: 50%; transform: translateY(-50%);
+    font-family: 'Bebas Neue', sans-serif; font-size: 180px;
+    color: rgba(232,255,60,0.04); letter-spacing: -4px;
+    pointer-events: none; white-space: nowrap;
+  }
+  .header-tag {
+    display: inline-block; font-size: 11px; font-weight: 500;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent); border: 1px solid var(--accent);
+    padding: 4px 12px; border-radius: 100px; margin-bottom: 16px;
+  }
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 10vw, 96px);
+    line-height: 0.95; letter-spacing: 2px; text-transform: uppercase;
+  }
+  h1 span { color: var(--accent); }
+  .header-sub { margin-top: 16px; color: var(--muted); font-size: 14px; max-width: 420px; line-height: 1.6; }
+
+  /* TABS */
+  .tabs {
+    display: flex; gap: 0; padding: 0 32px;
+    position: sticky; top: 0;
+    background: var(--bg); z-index: 10;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px;
+    padding: 18px 28px; background: transparent; border: none;
+    color: var(--muted); cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.25s; position: relative; top: 1px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* START BUTTON */
+  .start-wrap { padding: 28px 32px 4px; }
+  .start-btn {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 16px 36px;
+    background: var(--accent); color: #0d0d0d;
+    border: none; border-radius: var(--radius);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 21px; letter-spacing: 3px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 0 40px rgba(232,255,60,0.18);
+  }
+  .start-btn:hover { transform: scale(1.03); box-shadow: 0 0 60px rgba(232,255,60,0.32); }
+  .start-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+  /* MAIN */
+  main { position: relative; z-index: 1; }
+  .day-panel { display: none; }
+  .day-panel.active { display: block; }
+
+  /* PROGRESS */
+  .progress-bar-wrap { padding: 20px 32px 0; }
+  .progress-info { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); border-radius: 2px; transition: width 0.4s ease; width: 0%; }
+  .complete-banner { display: none; margin: 24px 32px; padding: 20px 24px; background: rgba(60,255,140,0.08); border: 1px solid var(--green); border-radius: var(--radius); color: var(--green); font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; align-items: center; gap: 12px; }
+  .complete-banner.show { display: flex; }
+
+  /* PHASE */
+  .phase { padding: 36px 32px; border-bottom: 1px solid var(--border); animation: fadeInUp 0.4s ease both; }
+  .phase:nth-child(3) { animation-delay: 0.1s; }
+  .phase:nth-child(4) { animation-delay: 0.2s; }
+  .phase-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+  .phase-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .phase-icon.warm { background: rgba(255,92,60,0.15); }
+  .phase-icon.main { background: rgba(232,255,60,0.12); }
+  .phase-icon.cool { background: rgba(60,255,140,0.12); }
+  .phase-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; }
+  .phase-title.warm { color: var(--accent2); }
+  .phase-title.main { color: var(--accent); }
+  .phase-title.cool { color: var(--green); }
+
+  /* EXERCISE CARDS */
+  .exercises { display: grid; gap: 12px; }
+  .ex-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: border-color 0.2s, transform 0.2s; }
+  .ex-card:hover { border-color: #444; transform: translateX(4px); }
+  .ex-card.done { border-color: var(--green); background: rgba(60,255,140,0.04); }
+  .ex-header { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
+  .ex-check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 13px; }
+  .ex-card.done .ex-check { background: var(--green); border-color: var(--green); color: #0d0d0d; }
+  .ex-name { font-weight: 500; font-size: 15px; flex: 1; line-height: 1.3; }
+  .ex-card.done .ex-name { text-decoration: line-through; color: var(--muted); }
+  .ex-expand { color: var(--muted); font-size: 18px; transition: transform 0.25s; flex-shrink: 0; }
+  .ex-card.open .ex-expand { transform: rotate(180deg); }
+  .ex-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  .ex-card.open .ex-body { max-height: 500px; }
+  .ex-desc { padding: 12px 18px 16px 58px; color: #aaa; font-size: 14px; line-height: 1.75; border-top: 1px solid var(--border); }
+  .ex-tip { margin-top: 8px; font-size: 12px; color: var(--accent); display: flex; align-items: flex-start; gap: 6px; }
+  .reset-btn { display: block; margin: 16px 32px 40px; padding: 14px 28px; background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+  .reset-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ══════════════════════════════════════
+     GUIDED OVERLAY
+  ══════════════════════════════════════ */
+  #guided-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: #080808;
+    flex-direction: column;
+  }
+  #guided-overlay.visible { display: flex; }
+
+  /* top bar */
+  .g-topbar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 24px; border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .g-close-btn {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: 8px 16px; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 12px;
+    cursor: pointer; letter-spacing: 1px; text-transform: uppercase;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .g-close-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .g-dots-wrap { flex: 1; display: flex; justify-content: center; }
+  .g-progress-dots { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; max-width: 360px; }
+  .g-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--border); transition: background 0.3s, transform 0.2s; flex-shrink: 0; }
+  .g-dot.done { background: var(--green); }
+  .g-dot.active { background: var(--accent); transform: scale(1.35); }
+  .g-counter { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--muted); letter-spacing: 2px; white-space: nowrap; flex-shrink: 0; }
+  .g-counter span { color: var(--accent); }
+
+  /* content */
+  .g-content {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 32px 28px; text-align: center; overflow-y: auto;
+  }
+
+  .g-phase-badge {
+    font-size: 11px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 100px; margin-bottom: 18px;
+  }
+  .g-phase-badge.warm { color: var(--accent2); border: 1px solid var(--accent2); background: rgba(255,92,60,0.08); }
+  .g-phase-badge.main { color: var(--accent); border: 1px solid var(--accent); background: rgba(232,255,60,0.08); }
+  .g-phase-badge.cool { color: var(--green); border: 1px solid var(--green); background: rgba(60,255,140,0.08); }
+
+  .g-ex-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(32px, 7vw, 64px);
+    letter-spacing: 2px; line-height: 1.05;
+    max-width: 680px; margin-bottom: 18px;
+  }
+  .g-ex-desc {
+    color: #999; font-size: 15px; line-height: 1.75;
+    max-width: 540px; margin-bottom: 28px;
+  }
+  .g-ex-desc strong { color: var(--text); font-weight: 500; }
+
+  /* circular timer */
+  .g-timer-wrap { position: relative; width: 180px; height: 180px; margin-bottom: 24px; }
+  .g-timer-svg { transform: rotate(-90deg); }
+  .g-timer-ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+  .g-timer-ring { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 502; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
+  .g-timer-ring.rest-ring { stroke: var(--blue); }
+  .g-timer-number { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .g-timer-sec { font-family: 'Bebas Neue', sans-serif; font-size: 54px; line-height: 1; letter-spacing: 2px; }
+  .g-timer-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+
+  /* tip box */
+  .g-tip {
+    font-size: 13px; color: var(--blue);
+    max-width: 480px; padding: 10px 16px; border-radius: 8px;
+    background: rgba(92,140,255,0.08); border: 1px solid rgba(92,140,255,0.2);
+    margin-bottom: 20px; line-height: 1.5;
+  }
+
+  /* rest screen */
+  .g-rest-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 72px;
+    letter-spacing: 6px; color: var(--blue); margin-bottom: 6px;
+  }
+  .g-next-preview { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+  .g-next-preview span { color: var(--text); font-weight: 500; }
+
+  /* buttons */
+  .g-btn-primary {
+    padding: 18px 52px;
+    background: var(--accent); color: #0d0d0d;
+    border: none; border-radius: var(--radius);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px; letter-spacing: 3px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 0 30px rgba(232,255,60,0.22);
+  }
+  .g-btn-primary:hover { transform: scale(1.04); box-shadow: 0 0 50px rgba(232,255,60,0.4); }
+  .g-btn-secondary {
+    display: block; margin-top: 14px;
+    padding: 11px 28px;
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .g-btn-secondary:hover { border-color: #666; color: var(--text); }
+
+  /* bottom nav */
+  .g-bottombar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px; border-top: 1px solid var(--border); flex-shrink: 0;
+  }
+  .g-nav-btn {
+    padding: 11px 22px; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .g-nav-btn:hover { border-color: #555; color: var(--text); }
+  .g-nav-btn:disabled { opacity: 0.2; cursor: default; pointer-events: none; }
+
+  /* finish screen */
+  .g-finish { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; flex: 1; }
+  .g-finish.show { display: flex; }
+  .g-finish-emoji { font-size: 80px; margin-bottom: 24px; animation: bounce 0.7s ease; }
+  .g-finish-title { font-family: 'Bebas Neue', sans-serif; font-size: 72px; letter-spacing: 4px; color: var(--green); }
+  .g-finish-sub { color: var(--muted); font-size: 16px; margin-top: 12px; margin-bottom: 36px; line-height: 1.6; }
+  @keyframes bounce { 0%,100% { transform: scale(1); } 40% { transform: scale(1.25); } 70% { transform: scale(0.95); } }
+
+  /* pulse flash on timer end */
+  @keyframes pulse-flash { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .timer-flash { animation: pulse-flash 0.25s 4; }
+
+  @media (max-width: 600px) {
+    header, .phase, .start-wrap { padding-left: 20px; padding-right: 20px; }
+    .tabs { padding-left: 12px; }
+    h1 { font-size: 52px; }
+    .progress-bar-wrap, .reset-btn, .complete-banner { margin-left: 20px; margin-right: 20px; }
+    .g-topbar, .g-bottombar { padding: 14px 16px; }
+    .g-content { padding: 20px 16px; }
+    .tab-btn { font-size: 16px; padding: 14px 16px; letter-spacing: 1px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     GUIDED MODE OVERLAY
+══════════════════════════════════════════ -->
+<div id="guided-overlay">
+
+  <!-- top bar -->
+  <div class="g-topbar">
+    <button class="g-close-btn" onclick="closeGuided()">✕ Esci</button>
+    <div class="g-dots-wrap">
+      <div class="g-progress-dots" id="g-dots"></div>
+    </div>
+    <div class="g-counter"><span id="g-cur">1</span>/<span id="g-tot">1</span></div>
+  </div>
+
+  <!-- exercise screen -->
+  <div class="g-content" id="g-ex-screen">
+    <div class="g-phase-badge" id="g-phase-badge">Fase</div>
+    <div class="g-ex-name" id="g-ex-name">—</div>
+    <div class="g-ex-desc" id="g-ex-desc"></div>
+    <div class="g-tip" id="g-tip" style="display:none"></div>
+
+    <!-- timed -->
+    <div class="g-timer-wrap" id="g-timer-wrap" style="display:none">
+      <svg class="g-timer-svg" width="180" height="180" viewBox="0 0 180 180">
+        <circle class="g-timer-ring-bg" cx="90" cy="90" r="80"/>
+        <circle class="g-timer-ring" id="g-ring" cx="90" cy="90" r="80"/>
+      </svg>
+      <div class="g-timer-number">
+        <div class="g-timer-sec" id="g-sec">30</div>
+        <div class="g-timer-label">secondi</div>
+      </div>
+    </div>
+    <button class="g-btn-secondary" id="g-pause-btn" onclick="togglePause()" style="display:none">⏸ Pausa</button>
+
+    <!-- reps -->
+    <button class="g-btn-primary" id="g-done-btn" onclick="guidedNext()" style="display:none">Ho finito →</button>
+  </div>
+
+  <!-- rest screen -->
+  <div class="g-content" id="g-rest-screen" style="display:none">
+    <div class="g-rest-title">RIPOSO</div>
+    <div class="g-next-preview">Prossimo: <span id="g-next-name">—</span></div>
+    <div class="g-timer-wrap">
+      <svg class="g-timer-svg" width="180" height="180" viewBox="0 0 180 180">
+        <circle class="g-timer-ring-bg" cx="90" cy="90" r="80"/>
+        <circle class="g-timer-ring rest-ring" id="g-rest-ring" cx="90" cy="90" r="80"/>
+      </svg>
+      <div class="g-timer-number">
+        <div class="g-timer-sec" id="g-rest-sec">30</div>
+        <div class="g-timer-label">riposo</div>
+      </div>
+    </div>
+    <button class="g-btn-secondary" onclick="skipRest()">Salta riposo →</button>
+  </div>
+
+  <!-- finish screen -->
+  <div class="g-finish" id="g-finish-screen">
+    <div class="g-finish-emoji">🎉</div>
+    <div class="g-finish-title">Ottimo lavoro!</div>
+    <div class="g-finish-sub">Hai completato tutto l'allenamento.<br>Bravissima!</div>
+    <button class="g-btn-primary" onclick="closeGuided()">Chiudi</button>
+  </div>
+
+  <!-- bottom bar -->
+  <div class="g-bottombar" id="g-bottombar">
+    <button class="g-nav-btn" id="g-prev-btn" onclick="guidedPrev()" disabled>← Indietro</button>
+    <button class="g-nav-btn" id="g-skip-btn" onclick="guidedNext()">Salta →</button>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════ -->
+<header>
+  <div class="header-tag">Programma Personale</div>
+  <h1>Schede di<br><span>Allenamento</span></h1>
+  <p class="header-sub">Consulta gli esercizi liberamente oppure avvia la modalità guidata per essere seguita passo dopo passo con timer automatici.</p>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchDay(1)">Giorno 1 — Gambe & Core</button>
+  <button class="tab-btn" onclick="switchDay(2)">Giorno 2 — Upper Body</button>
+</div>
+
+<main>
+
+<!-- ════════════════════════
+     GIORNO 1
+════════════════════════ -->
+<div class="day-panel active" id="day-1">
+
+  <div class="start-wrap">
+    <button class="start-btn" onclick="startGuided(1)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      Inizia Allenamento Guidato
+    </button>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-info"><span>Progresso</span><span id="d1-count">0 / 12</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="d1-bar"></div></div>
+  </div>
+  <div class="complete-banner" id="d1-complete">🎉 Allenamento completato!</div>
+
+  <section class="phase">
+    <div class="phase-header"><div class="phase-icon warm">🔥</div><span class="phase-title warm">Riscaldamento</span></div>
+    <div class="exercises">
+      <div class="ex-card" data-day="1"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Circonduzioni dell'anca</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Stazione eretta. Solleva un ginocchio a 90° e fai dei cerchi verso l'esterno con il ginocchio.<div class="ex-tip">⚡ 10 ripetizioni per lato</div></div></div></div>
+      <div class="ex-card" data-day="1"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Cossack Squat</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Gambe divaricate. Sposta il peso a destra e a sinistra flettendo leggermente le ginocchia. Serve a scaldare l'interno coscia.</div></div></div>
+      <div class="ex-card" data-day="1"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Rotazioni del Tronco</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">In piedi con le mani sui fianchi. Ruota il busto a destra e a sinistra mantenendo i piedi fermi.<div class="ex-tip">⚡ 20 ripetizioni totali</div></div></div></div>
+      <div class="ex-card" data-day="1"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Posizione del Gatto</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">A carponi. Espira e curva la schiena guardando verso l'ombelico. Inspira e inarca guardando avanti. Movimento lento e controllato.</div></div></div>
+    </div>
+  </section>
+
+  <section class="phase">
+    <div class="phase-header"><div class="phase-icon main">⚡</div><span class="phase-title main">Fase Centrale</span></div>
+    <div class="exercises">
+      <div class="ex-card" data-day="1"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Squat</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Piedi larghezza spalle, punte leggermente verso l'esterno. Scendi portando il sedere indietro come per sederti su una sedia. Non curvare troppo la schiena.</div></div></div>
+      <div class="ex-card" data-day="1"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Affondi sul Posto</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Fai un passo indietro e scendi in verticale fino a formare un angolo di 90° col ginocchio davanti. Tieni il petto in fuori e la schiena dritta.</div></div></div>
+      <div class="ex-card" data-day="1"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Ponte Glutei Monolaterale</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Sdraiata sulla schiena, una gamba piegata a terra e l'altra tesa in aria. Spingi sul tallone a terra per alzare il bacino.<div class="ex-tip">💡 Se è troppo difficile, inizia con entrambe le gambe a terra</div></div></div></div>
+      <div class="ex-card" data-day="1"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Plank con Spostamento Peso</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Posizione di plank sulle mani. Prendi una bottiglia e spostala da destra a sinistra sotto il petto. Il bacino deve restare immobile, senza dondolare.<div class="ex-tip">⚡ 30 secondi</div></div></div></div>
+      <div class="ex-card" data-day="1"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Dead Bug</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Sdraiata sulla schiena, braccia verso l'alto e gambe a 90°. Scendi col braccio destro e la gamba sinistra contemporaneamente. La schiena deve restare aderente al pavimento.<div class="ex-tip">💡 Se la schiena si stacca, non scendere troppo con la gamba</div></div></div></div>
+    </div>
+  </section>
+
+  <section class="phase">
+    <div class="phase-header"><div class="phase-icon cool">🌿</div><span class="phase-title cool">Defaticamento</span></div>
+    <div class="exercises">
+      <div class="ex-card" data-day="1"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Stretching Quadricipiti</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Stazione eretta. Porta il tallone vicino al gluteo tenendo le ginocchia vicine.<div class="ex-tip">⏱ 1 minuto per gamba</div></div></div></div>
+      <div class="ex-card" data-day="1"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Child's Pose</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Siediti sui talloni e allunga le braccia in avanti sul pavimento, rilassando il collo. Lascia che la fronte scenda verso il tappetino.<div class="ex-tip">⏱ 2 minuti</div></div></div></div>
+      <div class="ex-card" data-day="1"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Stretching Ischio-crurali al Muro</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Sdraiata sulla schiena. Appoggia le gambe tese al muro, schiena in retroversione e piedi a martello (punta verso di te).<div class="ex-tip">⏱ 90 secondi</div></div></div></div>
+    </div>
+  </section>
+
+  <button class="reset-btn" onclick="resetDay(1)">↺ Ricomincia allenamento</button>
+</div>
+
+
+<!-- ════════════════════════
+     GIORNO 2
+════════════════════════ -->
+<div class="day-panel" id="day-2">
+
+  <div class="start-wrap">
+    <button class="start-btn" onclick="startGuided(2)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      Inizia Allenamento Guidato
+    </button>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-info"><span>Progresso</span><span id="d2-count">0 / 11</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="d2-bar"></div></div>
+  </div>
+  <div class="complete-banner" id="d2-complete">🎉 Allenamento completato!</div>
+
+  <section class="phase">
+    <div class="phase-header"><div class="phase-icon warm">🔥</div><span class="phase-title warm">Riscaldamento</span></div>
+    <div class="exercises">
+      <div class="ex-card" data-day="2"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Circonduzioni delle Spalle</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Cerchi lenti e ampi con le spalle.<div class="ex-tip">⚡ 10 rotazioni in avanti + 10 indietro</div></div></div></div>
+      <div class="ex-card" data-day="2"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Aperture Laterali</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Sdraiata su un fianco con le gambe flesse. Apri il braccio superiore cercando di toccare terra dall'altro lato, ruotando il busto.<div class="ex-tip">⚡ 10 ripetizioni per lato</div></div></div></div>
+      <div class="ex-card" data-day="2"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Dislocazioni con Asciugamano</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Impugna un asciugamano teso con le mani distanziate. Portalo lentamente sopra la testa e poi dietro la schiena mantenendo le braccia tese.</div></div></div>
+    </div>
+  </section>
+
+  <section class="phase">
+    <div class="phase-header"><div class="phase-icon main">⚡</div><span class="phase-title main">Fase Centrale</span></div>
+    <div class="exercises">
+      <div class="ex-card" data-day="2"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Rematore con Zaino (Monobrac.)</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Busto flesso a 45°, ginocchia leggermente flesse e schiena piatta. Tira lo zaino verso l'ombelico portando il gomito indietro. Immagina di voler unire le scapole.</div></div></div>
+      <div class="ex-card" data-day="2"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Push-up sulle Ginocchia</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Mani leggermente più larghe delle spalle. Scendi con il petto (non con la pancia) senza aprire troppo i gomiti. Mantieni addome e glutei in contrazione, collo in asse con la colonna.</div></div></div>
+      <div class="ex-card" data-day="2"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Y-W-T Raises</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Sdraiata a pancia in giù, gambe tese. <strong>Y</strong> — braccia avanti a 45°, tieni 1-2 sec. <strong>W</strong> — piega i gomiti verso i fianchi avvicinando le scapole. <strong>T</strong> — apri le braccia a 90° dal busto. Non inarcare la schiena. Collo in asse.<div class="ex-tip">⚡ 8-10 ripetizioni complete</div></div></div></div>
+      <div class="ex-card" data-day="2"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Reverse Plank</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Seduta/sdraiata, mani a terra dietro la schiena. Solleva il bacino da terra aprendo il petto e guardando verso il soffitto. Tieni il corpo dritto.<div class="ex-tip">⚡ 10 ripetizioni</div></div></div></div>
+      <div class="ex-card" data-day="2"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Side Plank</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Appoggiati sul gomito da un fianco tenendo il corpo dritto. Solleva i fianchi da terra e mantieni la posizione per qualche secondo, poi scendi.<div class="ex-tip">⚡ 10 ripetizioni per lato — puoi piegare la gamba a 90° per più stabilità</div></div></div></div>
+    </div>
+  </section>
+
+  <section class="phase">
+    <div class="phase-header"><div class="phase-icon cool">🌿</div><span class="phase-title cool">Defaticamento</span></div>
+    <div class="exercises">
+      <div class="ex-card" data-day="2"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Stretching del Pettorale</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">Appoggia il braccio (a gomito piegato) contro uno stipite della porta. Ruota lentamente il corpo verso l'esterno finché senti lo stretching nel petto.<div class="ex-tip">⏱ 20 secondi per lato</div></div></div></div>
+      <div class="ex-card" data-day="2"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Allungamento Trapezio</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">In piedi o seduta con la schiena dritta. Porta una mano dietro la zona lombare. Con l'altra mano, inclina dolcemente la testa dal lato opposto cercando di avvicinare l'orecchio alla spalla.</div></div></div>
+      <div class="ex-card" data-day="2"><div class="ex-header" onclick="toggleCard(this)"><div class="ex-check">✓</div><span class="ex-name">Puppy Pose</span><span class="ex-expand">▾</span></div><div class="ex-body"><div class="ex-desc">A carponi. Cammina con le mani in avanti allontanandole dal corpo, tenendo il bacino fermo all'altezza delle ginocchia. Lascia che il petto scenda verso il pavimento.<div class="ex-tip">⏱ 30 secondi</div></div></div></div>
+    </div>
+  </section>
+
+  <button class="reset-btn" onclick="resetDay(2)">↺ Ricomincia allenamento</button>
+</div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════
+//  WORKOUT DATA
+// ══════════════════════════════════════════
+const WORKOUTS = {
+  1: [
+    { name: "Circonduzioni dell'anca",     phase:'warm', phaseLabel:'🔥 Riscaldamento', type:'reps',  desc:"Stazione eretta. Solleva un ginocchio a 90° e fai dei cerchi verso l'esterno con il ginocchio.",                                                                                                                                                              tip:"10 ripetizioni per lato" },
+    { name: "Cossack Squat",               phase:'warm', phaseLabel:'🔥 Riscaldamento', type:'reps',  desc:"Gambe divaricate. Sposta il peso a destra e a sinistra flettendo leggermente le ginocchia. Serve a scaldare l'interno coscia." },
+    { name: "Rotazioni del Tronco",        phase:'warm', phaseLabel:'🔥 Riscaldamento', type:'reps',  desc:"In piedi con le mani sui fianchi. Ruota il busto a destra e a sinistra mantenendo i piedi fermi.",                                                                                                                                                          tip:"20 ripetizioni totali" },
+    { name: "Posizione del Gatto",         phase:'warm', phaseLabel:'🔥 Riscaldamento', type:'reps',  desc:"A carponi. Espira e curva la schiena guardando verso l'ombelico. Inspira e inarca guardando avanti. Movimento lento e controllato." },
+    { name: "Squat",                       phase:'main', phaseLabel:'⚡ Fase Centrale',  type:'reps',  desc:"Piedi larghezza spalle, punte leggermente verso l'esterno. Scendi portando il sedere indietro come per sederti su una sedia. Non curvare troppo la schiena." },
+    { name: "Affondi sul Posto",           phase:'main', phaseLabel:'⚡ Fase Centrale',  type:'reps',  desc:"Fai un passo indietro e scendi in verticale fino a formare un angolo di 90° col ginocchio davanti. Tieni il petto in fuori e la schiena dritta." },
+    { name: "Ponte Glutei Monolaterale",   phase:'main', phaseLabel:'⚡ Fase Centrale',  type:'reps',  desc:"Sdraiata sulla schiena, una gamba piegata a terra e l'altra tesa in aria. Spingi sul tallone a terra per alzare il bacino.",                                                                                                                                tip:"💡 Se è troppo difficile, inizia con entrambe le gambe a terra" },
+    { name: "Plank con Spostamento Peso",  phase:'main', phaseLabel:'⚡ Fase Centrale',  type:'timed', duration:30, desc:"Posizione di plank sulle mani. Prendi una bottiglia e spostala da destra a sinistra sotto il petto. Il bacino deve restare immobile, senza dondolare." },
+    { name: "Dead Bug",                    phase:'main', phaseLabel:'⚡ Fase Centrale',  type:'reps',  desc:"Sdraiata sulla schiena, braccia verso l'alto e gambe a 90°. Scendi col braccio destro e la gamba sinistra contemporaneamente. La schiena deve restare aderente al pavimento.",                                                                             tip:"💡 Se la schiena si stacca, non scendere troppo con la gamba" },
+    { name: "Stretching Quadricipiti",     phase:'cool', phaseLabel:'🌿 Defaticamento',  type:'timed', duration:60, desc:"Stazione eretta. Porta il tallone vicino al gluteo tenendo le ginocchia vicine.",                                                                                                                                                             tip:"1 minuto per gamba — fallo su entrambi i lati!" },
+    { name: "Child's Pose",               phase:'cool', phaseLabel:'🌿 Defaticamento',  type:'timed', duration:120,desc:"Siediti sui talloni e allunga le braccia in avanti sul pavimento, rilassando il collo. Lascia che la fronte scenda verso il tappetino." },
+    { name: "Stretching Ischio-crurali",   phase:'cool', phaseLabel:'🌿 Defaticamento',  type:'timed', duration:90, desc:"Sdraiata sulla schiena. Appoggia le gambe tese al muro, schiena in retroversione e piedi a martello (punta verso di te). Rilassati e respira." },
+  ],
+  2: [
+    { name: "Circonduzioni delle Spalle",  phase:'warm', phaseLabel:'🔥 Riscaldamento', type:'reps',  desc:"Cerchi lenti e ampi con le spalle.",                                                                                                                                                                                                                        tip:"10 rotazioni in avanti + 10 indietro" },
+    { name: "Aperture Laterali",           phase:'warm', phaseLabel:'🔥 Riscaldamento', type:'reps',  desc:"Sdraiata su un fianco con le gambe flesse. Apri il braccio superiore cercando di toccare terra dall'altro lato, ruotando il busto.",                                                                                                                        tip:"10 ripetizioni per lato" },
+    { name: "Dislocazioni con Asciugamano",phase:'warm', phaseLabel:'🔥 Riscaldamento', type:'reps',  desc:"Impugna un asciugamano teso con le mani distanziate. Portalo lentamente sopra la testa e poi dietro la schiena mantenendo le braccia tese." },
+    { name: "Rematore con Zaino",          phase:'main', phaseLabel:'⚡ Fase Centrale',  type:'reps',  desc:"Busto flesso a 45°, ginocchia leggermente flesse e schiena piatta. Tira lo zaino verso l'ombelico portando il gomito indietro. Immagina di voler unire le scapole." },
+    { name: "Push-up sulle Ginocchia",     phase:'main', phaseLabel:'⚡ Fase Centrale',  type:'reps',  desc:"Mani leggermente più larghe delle spalle. Scendi con il petto (non con la pancia) senza aprire troppo i gomiti. Mantieni addome e glutei in contrazione, collo in asse con la colonna." },
+    { name: "Y-W-T Raises",               phase:'main', phaseLabel:'⚡ Fase Centrale',  type:'reps',  desc:"Sdraiata a pancia in giù, gambe tese. <strong>Y</strong> — braccia avanti a 45°, tieni 1–2 sec. <strong>W</strong> — piega i gomiti verso i fianchi avvicinando le scapole. <strong>T</strong> — apri le braccia a 90° dal busto. Non inarcare la schiena. Collo in asse.", tip:"8-10 ripetizioni complete" },
+    { name: "Reverse Plank",               phase:'main', phaseLabel:'⚡ Fase Centrale',  type:'reps',  desc:"Seduta/sdraiata, mani a terra dietro la schiena. Solleva il bacino aprendo il petto e guardando verso il soffitto. Tieni il corpo dritto.",                                                                                                                tip:"10 ripetizioni" },
+    { name: "Side Plank",                  phase:'main', phaseLabel:'⚡ Fase Centrale',  type:'timed', duration:30, desc:"Appoggiati sul gomito da un fianco. Solleva i fianchi da terra e mantieni il corpo dritto. Esegui su entrambi i lati.",                                                                                                                        tip:"💡 Le prime volte puoi piegare la gamba a 90° per più stabilità" },
+    { name: "Stretching del Pettorale",    phase:'cool', phaseLabel:'🌿 Defaticamento',  type:'timed', duration:40, desc:"Appoggia il braccio (a gomito piegato) contro uno stipite della porta. Ruota lentamente il corpo verso l'esterno finché senti lo stretching nel petto.",                                                                                      tip:"20 secondi per lato" },
+    { name: "Allungamento Trapezio",       phase:'cool', phaseLabel:'🌿 Defaticamento',  type:'reps',  desc:"In piedi o seduta con la schiena dritta. Porta una mano dietro la zona lombare. Con l'altra mano, inclina dolcemente la testa dal lato opposto cercando di avvicinare l'orecchio alla spalla." },
+    { name: "Puppy Pose",                  phase:'cool', phaseLabel:'🌿 Defaticamento',  type:'timed', duration:30, desc:"A carponi. Cammina con le mani in avanti allontanandole dal corpo, tenendo il bacino fermo all'altezza delle ginocchia. Lascia che il petto scenda verso il pavimento." },
+  ]
+};
+
+const REST_SEC = 30;
+const CIRCUMFERENCE = 502; // 2πr, r=80
+
+// ── State ──
+let gDay=1, gIdx=0, gExs=[], gTimerInt=null, gRestInt=null;
+let gTimerSec=0, gTimerTotal=0, gPaused=false;
+
+// ── Start / Close ──
+function startGuided(day) {
+  gDay = day; gIdx = 0; gPaused = false;
+  gExs = WORKOUTS[day];
+  clearTimers();
+
+  // build dots
+  const dotsEl = document.getElementById('g-dots');
+  dotsEl.innerHTML = gExs.map((_,i) => `<div class="g-dot" id="gd${i}"></div>`).join('');
+  document.getElementById('g-tot').textContent = gExs.length;
+
+  // show overlay
+  document.getElementById('guided-overlay').classList.add('visible');
+  document.body.style.overflow = 'hidden';
+
+  showExScreen();
+  renderExercise();
+}
+
+function closeGuided() {
+  clearTimers();
+  document.getElementById('guided-overlay').classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
+// ── Screens ──
+function showExScreen() {
+  document.getElementById('g-ex-screen').style.display = 'flex';
+  document.getElementById('g-rest-screen').style.display = 'none';
+  document.getElementById('g-finish-screen').classList.remove('show');
+  document.getElementById('g-bottombar').style.display = 'flex';
+}
+
+function showRestScreen() {
+  document.getElementById('g-ex-screen').style.display = 'none';
+  document.getElementById('g-rest-screen').style.display = 'flex';
+  document.getElementById('g-bottombar').style.display = 'none';
+}
+
+// ── Render ──
+function renderExercise() {
+  clearTimers(); gPaused = false;
+  showExScreen();
+
+  const ex = gExs[gIdx];
+  document.getElementById('g-cur').textContent = gIdx + 1;
+
+  // badge
+  const badge = document.getElementById('g-phase-badge');
+  badge.textContent = ex.phaseLabel;
+  badge.className = 'g-phase-badge ' + ex.phase;
+
+  document.getElementById('g-ex-name').textContent = ex.name;
+  document.getElementById('g-ex-desc').innerHTML = ex.desc;
+
+  const tipEl = document.getElementById('g-tip');
+  if (ex.tip) { tipEl.textContent = ex.tip; tipEl.style.display = 'block'; }
+  else tipEl.style.display = 'none';
+
+  document.getElementById('g-prev-btn').disabled = gIdx === 0;
+
+  updateDots();
+
+  if (ex.type === 'timed') {
+    document.getElementById('g-timer-wrap').style.display = 'block';
+    document.getElementById('g-done-btn').style.display = 'none';
+    document.getElementById('g-pause-btn').style.display = 'inline-block';
+    document.getElementById('g-pause-btn').textContent = '⏸ Pausa';
+    startExTimer(ex.duration);
+  } else {
+    document.getElementById('g-timer-wrap').style.display = 'none';
+    document.getElementById('g-done-btn').style.display = 'inline-block';
+    document.getElementById('g-pause-btn').style.display = 'none';
+  }
+}
+
+// ── Exercise timer ──
+function startExTimer(sec) {
+  gTimerSec = sec; gTimerTotal = sec;
+  setRing('g-ring', sec, sec);
+  document.getElementById('g-sec').textContent = sec;
+  gTimerInt = setInterval(() => {
+    if (gPaused) return;
+    gTimerSec--;
+    document.getElementById('g-sec').textContent = gTimerSec;
+    setRing('g-ring', gTimerSec, gTimerTotal);
+    if (gTimerSec <= 0) {
+      clearInterval(gTimerInt);
+      flashEl('g-sec'); beep();
+      setTimeout(guidedNext, 900);
+    }
+  }, 1000);
+}
+
+function togglePause() {
+  gPaused = !gPaused;
+  document.getElementById('g-pause-btn').textContent = gPaused ? '▶ Riprendi' : '⏸ Pausa';
+}
+
+// ── Rest ──
+function startRest() {
+  clearTimers();
+  showRestScreen();
+  const nextEx = gExs[gIdx + 1];
+  document.getElementById('g-next-name').textContent = nextEx ? nextEx.name : '—';
+  let restSec = REST_SEC;
+  setRing('g-rest-ring', restSec, REST_SEC);
+  document.getElementById('g-rest-sec').textContent = restSec;
+  gRestInt = setInterval(() => {
+    restSec--;
+    document.getElementById('g-rest-sec').textContent = restSec;
+    setRing('g-rest-ring', restSec, REST_SEC);
+    if (restSec <= 0) {
+      clearInterval(gRestInt);
+      beep();
+      advance();
+    }
+  }, 1000);
+}
+
+function skipRest() { clearInterval(gRestInt); advance(); }
+
+// ── Navigation ──
+function guidedNext() {
+  markCardDone(gDay, gIdx);
+  if (gIdx >= gExs.length - 1) { showFinish(); return; }
+
+  const cur = gExs[gIdx];
+  const nxt = gExs[gIdx + 1];
+  // skip rest during warm-up and cool-down
+  if (cur.phase === 'warm' || cur.phase === 'cool' || nxt.phase === 'cool') {
+    advance();
+  } else {
+    startRest();
+  }
+}
+
+function advance() { gIdx++; renderExercise(); }
+
+function guidedPrev() {
+  if (gIdx === 0) return;
+  clearTimers();
+  gIdx--;
+  renderExercise();
+}
+
+function showFinish() {
+  clearTimers();
+  document.getElementById('g-ex-screen').style.display = 'none';
+  document.getElementById('g-rest-screen').style.display = 'none';
+  document.getElementById('g-bottombar').style.display = 'none';
+  document.getElementById('g-finish-screen').classList.add('show');
+  beep(); setTimeout(beep, 300); setTimeout(beep, 600);
+  const panel = document.getElementById('day-' + gDay);
+  panel.querySelectorAll('.ex-card').forEach(c => c.classList.add('done'));
+  updateProgress(gDay);
+}
+
+// ── Helpers ──
+function setRing(id, sec, total) {
+  const offset = CIRCUMFERENCE * (1 - sec / total);
+  document.getElementById(id).style.strokeDashoffset = Math.max(0, offset);
+}
+
+function updateDots() {
+  gExs.forEach((_, i) => {
+    const d = document.getElementById('gd' + i);
+    if (!d) return;
+    d.className = 'g-dot';
+    if (i < gIdx) d.classList.add('done');
+    else if (i === gIdx) d.classList.add('active');
+  });
+}
+
+function markCardDone(day, idx) {
+  const panel = document.getElementById('day-' + day);
+  const cards = panel.querySelectorAll('.ex-card');
+  if (cards[idx]) cards[idx].classList.add('done');
+  updateProgress(day);
+}
+
+function clearTimers() { clearInterval(gTimerInt); clearInterval(gRestInt); }
+
+function flashEl(id) {
+  const el = document.getElementById(id);
+  el.classList.add('timer-flash');
+  setTimeout(() => el.classList.remove('timer-flash'), 1000);
+}
+
+function beep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 880; osc.type = 'sine';
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc.start(); osc.stop(ctx.currentTime + 0.5);
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════
+//  NORMAL VIEW
+// ══════════════════════════════════════════
+function switchDay(day) {
+  document.querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('day-' + day).classList.add('active');
+  document.querySelectorAll('.tab-btn')[day - 1].classList.add('active');
+}
+
+function toggleCard(header) {
+  const card = header.closest('.ex-card');
+  const wasOpen = card.classList.contains('open');
+  card.closest('.exercises').querySelectorAll('.ex-card').forEach(s => s.classList.remove('open'));
+  if (!wasOpen) card.classList.add('open');
+}
+
+document.addEventListener('click', e => {
+  const check = e.target.closest('.ex-check');
+  if (!check) return;
+  e.stopPropagation();
+  const card = check.closest('.ex-card');
+  card.classList.toggle('done');
+  updateProgress(card.dataset.day);
+});
+
+function updateProgress(day) {
+  const panel = document.getElementById('day-' + day);
+  const total = panel.querySelectorAll('.ex-card').length;
+  const done  = panel.querySelectorAll('.ex-card.done').length;
+  document.getElementById('d' + day + '-count').textContent = done + ' / ' + total;
+  document.getElementById('d' + day + '-bar').style.width = (done / total * 100) + '%';
+  const banner = document.getElementById('d' + day + '-complete');
+  if (done === total) banner.classList.add('show'); else banner.classList.remove('show');
+}
+
+function resetDay(day) {
+  document.getElementById('day-' + day).querySelectorAll('.ex-card').forEach(c => c.classList.remove('done','open'));
+  updateProgress(day);
+}
+</script>
+</body>
+</html>
